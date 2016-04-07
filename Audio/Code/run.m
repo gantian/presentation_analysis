@@ -1,0 +1,8 @@
+
+clear;
+
+Matlab_Speaker_getSyllable
+
+Matlab_Speaker_getPitch
+
+Matlab_Speaker_getFormant
