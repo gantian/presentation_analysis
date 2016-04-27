@@ -3,5 +3,6 @@ function [ para ] = Config_Para(  )
     %   Detailed explanation goes here
     para.ResultPath = './Result';
     para.FFMpegPath = sprintf('D:/ffmpeg');
+    para.AudioPath = 'W:/Research/Data/MM15_data/LabelData/speakerAudio';
 end
 
