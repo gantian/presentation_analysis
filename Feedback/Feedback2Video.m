@@ -23,8 +23,8 @@ function Feedback2Video(spk_ID)
     %                 continue;
     %             end
     
-    numFrames = length(dir(sprintf('./Imgs/S%02d_value_*.jpg',pID)));    
-    duration = 60;%numFrames;
+    numFrames = length(dir(sprintf('%s/Imgs/S%02d_value_*.jpg',currentPath,pID)));    
+    duration = numFrames;
     
     frameRateResult = 1;
     commandStr =strcat(sprintf('ffmpeg'),...

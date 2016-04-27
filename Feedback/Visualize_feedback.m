@@ -1,23 +1,36 @@
-function Visualize_feedback(spk_ID)
+function Visualize_feedback(spk_ID,value_graph,pi_graph)
     
-     switch nargin
+    switch nargin
         case 0
             spk_ID = 1;
     end
     
-    warning('off','all');    
+%     value_graph = true;
+%     pi_graph = false;
+    
+    
+    warning('off','all');
     para = Config_Para;
-   
-    anno_convert = load(sprintf('%s/taskAssignment',para.ResultPath));  
+    
+    anno_convert = load(sprintf('%s/taskAssignment',para.ResultPath));
     showList = anno_convert.taskAssignment.showList;
     
     close all;
-    hPi = figure('Visible', 'off');
-    hValue = figure('Visible', 'off');
+    
+    hPi = 0;
+    hValue = 0;
+    
+    if value_graph
+        hValue = figure('Visible', 'off');        
+    end    
+    if pi_graph
+        
+        hPi = figure('Visible', 'off');
+    end
         
     loaded = LoadDataFunc;
     
-    res = [ 
+    res = [
         loaded.label.c01_speaking_rate,...1
         loaded.label.c02_fluency,...2
         loaded.label.c03_liveness,...3
@@ -33,8 +46,8 @@ function Visualize_feedback(spk_ID)
         loaded.label.c14_engagement_1,...13
         loaded.label.c16_engagement_2,...14
         loaded.label.c17_pre_state];...15
-            
-    for iSpeaker=spk_ID       
+        
+    for iSpeaker=spk_ID
         idx = find(showList(:,3)==iSpeaker);
         low = min(idx);
         up = max(idx);
@@ -44,21 +57,26 @@ function Visualize_feedback(spk_ID)
         totalLen = size(show,1);
         con_showLen = 40;
         for iTotalLen = 1:totalLen
-            disp(iTotalLen);
+            %disp(iTotalLen);
+            fprintf('Spk%02d: %d/%d\n',spk_ID, iTotalLen,totalLen);
             showData_snapshot = show(max(iTotalLen-con_showLen+1,1):iTotalLen,:);
             showData_accum = show(1:iTotalLen,:);
-            ShowStat(showData_snapshot,showData_accum,hValue,hPi);
+            
+            ShowStat(showData_snapshot,showData_accum,value_graph,hValue,pi_graph,hPi,iTotalLen);
             
             if 1
-                set(0,'CurrentFigure',hValue);
-                saveFileName = sprintf('./Imgs/S%02d_value_%04d.jpg',iSpeaker,iTotalLen);
-                saveas(gcf,saveFileName);
-                set(0,'CurrentFigure',hPi);
-                saveFileName = sprintf('./Imgs/S%02d_pi_%04d.jpg',iSpeaker,iTotalLen);
-                saveas(gcf,saveFileName);
-            end
-            
-            %pause(0.2);
+                if value_graph
+                    set(0,'CurrentFigure',hValue);
+                    saveFileName = sprintf('./Imgs/S%02d_value_%04d.jpg',iSpeaker,iTotalLen);
+                    saveas(gcf,saveFileName);
+                end
+                
+                if pi_graph
+                    set(0,'CurrentFigure',hPi);
+                    saveFileName = sprintf('./Imgs/S%02d_pi_%04d.jpg',iSpeaker,iTotalLen);
+                    saveas(gcf,saveFileName);
+                end
+            end                        
         end
         
         if 0
@@ -69,12 +87,12 @@ function Visualize_feedback(spk_ID)
             saveFileName = sprintf('./Result/S%02d_pi.pdf',iSpeaker);
             saveas(gcf,saveFileName);
         end
-    end   
+    end
     warning('on','all');
 end
-function ShowStat( data_snapshot,data_accum,hValue,hPi )
+function ShowStat( data_snapshot,data_accum,value_graph,hValue,pi_graph,hPi,curSecond )
     opt = {'Linewidth',3};
-    optFont = {'fontsize',16};
+    optFont = {'fontsize',14};
     con_textL = GetConceptTextL;
     
     replaceNan = 2;
@@ -83,7 +101,7 @@ function ShowStat( data_snapshot,data_accum,hValue,hPi )
     
     colorScheme1 = {[155 243 199]./255,[228 243 155]./255,[155 170 243]./255};
     colorSchemePresentationState = {[255 182 193]./255,[135 206 250]./255,[254 254 254]./255};
-
+    
     
     for iConcept = 1:5
         concept = data_snapshot(:,iConcept);
@@ -91,39 +109,43 @@ function ShowStat( data_snapshot,data_accum,hValue,hPi )
         concept_accum = data_accum(:,iConcept);
         concept(concept_accum==-1|concept_accum==0|isnan(concept_accum)) = replaceNan;
         
-        set(0,'CurrentFigure',hValue);
-        subplot_tight(numRow,numCol,iConcept,[0.05, 0.05]);
-        cla;hold on
+        if value_graph
+            set(0,'CurrentFigure',hValue);
+            subplot_tight(numRow,numCol,iConcept,[0.05, 0.05]);
+            cla;hold on
+            
+            ydata = [1:3];ylabels = {'A','B','C'};
+            set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);
+            axis([1 40 0 4]);
+            
+            plot(concept,opt{:},'Color','k');
+            title(con_textL{iConcept},'fontsize',14);
+            text(1,5,con_textL{iConcept},optFont{:});
+            set(gca, 'visible', 'off') ;
+            DrawPresentationState(data_snapshot(:,15));
+        end
         
-        ydata = [1:3];ylabels = {'A','B','C'};
-        set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);        
-        axis([1 40 0 4]);
-        
-        plot(concept,opt{:},'Color','k');
-        title(con_textL{iConcept},'fontsize',14);
-        text(1,5,con_textL{iConcept},optFont{:});        
-        set(gca, 'visible', 'off') ;
-        DrawPresentationState(data_snapshot(:,15));
-        
-        set(0,'CurrentFigure',hPi);
-        subplot_tight(3,3,iConcept,[0.05, 0.05]);
-        
-        DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorScheme1);        
+        if pi_graph
+            set(0,'CurrentFigure',hPi);
+            subplot_tight(3,3,iConcept,[0.05, 0.05]);
+            
+            DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorScheme1);
+        end
     end
     
-    set(0,'CurrentFigure',hValue);
+    color_Att = [155 170 243]./255;
     
-    set(0,'CurrentFigure',hValue);
-    subplot_tight(numRow,numCol,[6 8],[0.03, 0.03]);
+    if value_graph
+        set(0,'CurrentFigure',hValue);
+        subplot_tight(numRow,numCol,[6 8],[0.03, 0.05]);
+        cla;set(gca, 'visible', 'off') ;
+    end
     
-    cla;set(gca, 'visible', 'off') ;
     concept_att_cnt = zeros(5,1);
     concept_Other_accum = zeros(size(data_accum(:,6)));
     concept_Other = zeros(size(data_snapshot(:,6)));
     gapSize = 1.5;
-    
-    color_Att = [155 170 243]./255;
-    
+            
     for iConcept = 6:10
         concept = data_snapshot(:,iConcept);  concept(concept ~= 1) = nan;
         
@@ -135,72 +157,87 @@ function ShowStat( data_snapshot,data_accum,hValue,hPi )
         if iConcept==10,concept = double(~concept_Other);concept(concept ~= 1) = nan;
         else concept_Other(concept == 1) = 1; end
         
-        concept_att_cnt(iConcept-5) = sum(concept_accum==1);        
-        set(0,'CurrentFigure',hValue);
+        concept_att_cnt(iConcept-5) = sum(concept_accum==1);
         
-        axis([1 40 3.5 18]);hold on;        
-        
-        conceptColor = 'k';
-        
-        offC = (iConcept-5)*(1.5+gapSize);
-        p=patch([0 length(concept) length(concept) 0],[-0.5 -0.5 1 1]+offC+gapSize,conceptColor);
-        set(p,'FaceAlpha',0.1,'EdgeColor','none');
-        for iConDraw = 1:length(concept)            
-            if ~isnan(concept(iConDraw))                
-                %color_3 = [155 170 243]./255;
-                
-                p=patch([iConDraw-1 iConDraw iConDraw iConDraw-1],[-0.5 -0.5 1 1]+offC+gapSize,color_Att);
-                set(p,'FaceAlpha',0.8,'EdgeColor','none');
+       
+        if value_graph
+            conceptColor = 'k';
+            
+            offC = (iConcept-5)*(1.5+gapSize);
+            p=patch([0 length(concept) length(concept) 0],[-0.5 -0.5 1 1]+offC+gapSize,conceptColor);
+            set(p,'FaceAlpha',0.1,'EdgeColor','none');
+            for iConDraw = 1:length(concept)
+                if ~isnan(concept(iConDraw))
+                    %color_3 = [155 170 243]./255;
+                    
+                    p=patch([iConDraw-1 iConDraw iConDraw iConDraw-1],[-0.5 -0.5 1 1]+offC+gapSize,color_Att);
+                    set(p,'FaceAlpha',0.8,'EdgeColor','none');
+                end
             end
+                        
+            set(0,'CurrentFigure',hValue);
+            axis([1 40 3.5 18]);hold on;
+            text(1,(iConcept-4.2)*(1.5+gapSize)+0.6,con_textL{iConcept},optFont{:});
         end
-                
-        text(1,(iConcept-4.2)*(1.5+gapSize)+0.6,con_textL{iConcept},optFont{:});
     end
-            
-    set(0,'CurrentFigure',hPi);
-    subplot_tight(3,3,6,[0.1, 0.1]);
-    cla;
-    bar(concept_att_cnt./length(concept_Other_accum)*100,'FaceColor',color_Att);%[155 170 243]./255);
-    axis([0 6 0 100]);
-    xdata = (0:6);xlabels = {' ','Aud','Scre','Com','Scri','Oth',' '};
-    Ydata = (0:25:100);
-    set(gca,'Xtick', xdata, 'XtickLabel', xlabels,'Ytick',Ydata,'FontSize',9);
     
-    ylabel('Percentage (%)');
+    if pi_graph
+        set(0,'CurrentFigure',hPi);
+        subplot_tight(3,3,6,[0.1, 0.1]);
+        cla;
+        
+        bar(concept_att_cnt./length(concept_Other_accum)*100,'FaceColor',color_Att);%[155 170 243]./255);
+        axis([0 6 0 100]);
+        xdata = (0:6);xlabels = {' ','Aud','Scre','Com','Scri','Oth',' '};
+        Ydata = (0:25:100);
+        set(gca,'Xtick', xdata, 'XtickLabel', xlabels,'Ytick',Ydata,'FontSize',9);
+        
+        ylabel('Percentage (%)');
+        
+        text(2,135,'Attention','Fontsize',14);
+    end
     
-    text(2,135,'Attention','Fontsize',16);
-            
     for iConcept = 13:14
         concept = data_snapshot(:,iConcept);
         concept(concept==-1|concept==0|isnan(concept)) = replaceNan;
         
-        set(0,'CurrentFigure',hValue);
-        subplot_tight(numRow,numCol,iConcept-4,[0.05, 0.05]);
-        cla;hold on;
-                
-        ydata = (1:3);ylabels = {'A','B','C'};
-        set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);
-        
-        axis([1 40 0 4]);
+        if value_graph
+            set(0,'CurrentFigure',hValue);
+            subplot_tight(numRow,numCol,iConcept-4,[0.05, 0.05]);
+            cla;hold on;
+            
+            ydata = (1:3);ylabels = {'A','B','C'};
+            set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);
+            
+            axis([1 40 0 4]);
+        end
         
         if iConcept==15
             concept(concept==3) = 2;
-            ydata = (1:2);ylabels = {'A','B'};
-            set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);
             
-            axis([1 40 0 3]);
+            if value_graph
+                ydata = (1:2);ylabels = {'A','B'};
+                set(gca,'xtick',[],'Ytick', ydata, 'YtickLabel', ylabels);
+                
+                axis([1 40 0 3]);
+            end
         end
-        plot(concept,opt{:},'Color','k');
-        title(con_textL{iConcept},'fontsize',14);
-        text(1,5,con_textL{iConcept},optFont{:});
-        set(gca, 'visible', 'off') ;
-        DrawPresentationState(data_snapshot(:,15));
-                        
-        set(0,'CurrentFigure',hPi);
-        subplot_tight(3,3,iConcept-6,[0.05, 0.05]);
         
-        concept_accum = data_accum(:,iConcept);        
-        DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorScheme1);
+        if value_graph
+            plot(concept,opt{:},'Color','k');
+            title(con_textL{iConcept},'fontsize',14);
+            text(1,5,con_textL{iConcept},optFont{:});
+            set(gca, 'visible', 'off') ;
+            DrawPresentationState(data_snapshot(:,15));
+        end
+        
+        if pi_graph
+            set(0,'CurrentFigure',hPi);
+            subplot_tight(3,3,iConcept-6,[0.05, 0.05]);
+            
+            concept_accum = data_accum(:,iConcept);
+            DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorScheme1);
+        end
         
     end
     
@@ -213,27 +250,35 @@ function ShowStat( data_snapshot,data_accum,hValue,hPi )
         concept_accum(concept_accum==-1|concept_accum==0|isnan(concept_accum)) = replaceNan;
         concept_accum(concept_accum==3) = 2;% yes with feedback
         
-        set(0,'CurrentFigure',hPi);
-        subplot_tight(3,3,iConcept-6,[0.05, 0.05]);
-        
-        DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorSchemePresentationState);        
+        if pi_graph
+            set(0,'CurrentFigure',hPi);
+            subplot_tight(3,3,iConcept-6,[0.05, 0.05]);
+            
+            DrawPiGraph(concept_accum,con_textL{iConcept},iConcept,colorSchemePresentationState);
+        end
     end
     
-    set(0,'CurrentFigure',hValue);
-    loc = length(concept)-1-0.1;
-    for iText = -100:100
-        %text(loc,iText,'|','fontsize',36,'color','r');
-        text(loc+1,iText,'|','fontsize',36,'color','r');
+    if value_graph
+        set(0,'CurrentFigure',hValue);
+        loc = length(concept)-1-0.1;
+        
+        curTime = sprintf('%02d:%02d',floor(curSecond/60),mod(curSecond,60));
+        text(loc-2.5,-1.2,curTime,'fontsize',18,'color','r');
+        
+        for iText = -10:100
+            %text(loc,iText,'|','fontsize',36,'color','r');
+            text(loc+1,iText,'|','fontsize',36,'color','r');
+        end
     end
     
 end
 function DrawPresentationState(concept)
     preState = concept(1);
     
-%     color_1 = [155 243 199]./255;
-%     color_2 = [228 243 155]./255;
-%     color_3 = [254 254 254]./255;
-
+    %     color_1 = [155 243 199]./255;
+    %     color_2 = [228 243 155]./255;
+    %     color_3 = [254 254 254]./255;
+    
     color_1 = [255 182 193]./255;
     color_2 = [135 206 250]./255;
     color_3 = [254 254 254]./255;
@@ -268,12 +313,12 @@ end
 function DrawPiGraph(concept,titleText,iConcept,colorScheme)
     if nargin<3,iConcept = 1;end
     concept(concept==-1| concept==0 | isnan(concept)) = [];
-
+    
     if length(concept)<1
         return;
-    end    
+    end
     
-    numValue = zeros(3,1);   
+    numValue = zeros(3,1);
     for iNumValue = 1:3
         numValue(iNumValue) = sum(concept==iNumValue);
     end
@@ -283,7 +328,7 @@ function DrawPiGraph(concept,titleText,iConcept,colorScheme)
     
     hPieComponentHandles = pie(numValue);
     colorIdx = find(numValue>0);
-   
+    
     for iColor = 1:sum(numValue>0)
         set(hPieComponentHandles(iColor*2-1), 'FaceColor', colorScheme{colorIdx(iColor)});
     end
@@ -295,10 +340,10 @@ function DrawPiGraph(concept,titleText,iConcept,colorScheme)
         labels = {'No Att','Att','Att with F'};
     end
     
-    %legend(labels{numValue>0},'Location','southoutside','Orientation','horizontal');    
-    legend(labels{:},'Location','southoutside','Orientation','horizontal');    
-    %legend(labels{weights>0},'Location','southoutside','Orientation','horizontal');    
-    title(titleText,'Fontsize',14);    
+    legend(labels{numValue>0},'Location','southoutside','Orientation','horizontal');
+    %legend(labels{:},'Location','southoutside','Orientation','horizontal');
+    %legend(labels{weights>0},'Location','southoutside','Orientation','horizontal');
+    title(titleText,'Fontsize',14);
 end
 function con_textL = GetConceptTextL
     con_textL ={...
@@ -317,7 +362,7 @@ function con_textL = GetConceptTextL
         'Audience1 Engagement',...13
         'Audience2 Engagement',...14
         'Presentation State'...15
-        };    
+        };
 end
 
 function loaded = LoadDataFunc
