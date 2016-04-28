@@ -66,12 +66,14 @@ for iSpeaker = 3:3
     for iDuration = 1:duration
         wholeBody_selection = (2:12);
         %gesture_selection = (5:12);
-        wholeBodyFeat = zeros(11,3);
+        wholeBodyFeat_tmp = zeros(25,3);
         for iFrame = 1:25
             feat_frame = ReadSkeleton(kinect,(iDuration-1)*25+iFrame);
-            
+            wholeBodyFeat_tmp(iFrame,:) = feat_frame(wholeBody_selection,2:4);%Pos_X to Pos_Z            
         end
         
+        
+        wholeBodyFeat_secondLoc = mean(wholeBodyFeat_tmp);
     end
     
     SkeletonFeatureSum = zeros(s,1);
