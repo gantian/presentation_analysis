@@ -1,4 +1,10 @@
 clear;
+oneDsignal = floor(rand(10,1)*10);
+
+windowWidth = 3; % or whatever.
+movingSum = conv(oneDsignal, ones(windowWidth,1));
+
+clear;
 
 para = Config_Para();
 
