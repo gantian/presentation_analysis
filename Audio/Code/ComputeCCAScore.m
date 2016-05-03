@@ -1,124 +1,106 @@
 clear;
 
-self=0;other=0;
+%body movement 1
+%gesture 2
+%head movement 3
 
-corr_head_pitch = 0;
-corr_head_speakingrate = 0;
-corr_head_energy = 0;
-corr_gesture_pitch = 0;
-corr_bodymovement_pitch = 0;
+%pitch 1
+%speaking rate 2
+%voice 3
 
+corr_matrix = zeros(3,3);
+details = zeros(9,100);
 
 sSpeaker = 1;
 eSpeaker = 51;
 
 nSpeaker = 0;
 
-rSp = zeros(51,1);
-rSp_2 = zeros(51,1);
-rSp_gest_Pitch= zeros(51,1);
-rSp_bm_Pitch= zeros(51,1);
+commonPath = './data_withnoise';
 
 for iSpeaker = sSpeaker:eSpeaker
     if (iSpeaker == 3 || iSpeaker==4)
         continue;
     end
-     dataLoad = load(sprintf('./data/Spk_%03d_rate.mat',iSpeaker));
-     rate = dataLoad.Rate;
+     dataLoad = load(sprintf('%s/Spk_%03d_rate.mat',commonPath,iSpeaker));
+     rate = dataLoad.rate;
      
-     dataLoad = load(sprintf('./data/Spk_%03d_pitch.mat',iSpeaker));
-     pitch = dataLoad.pitchnew;
+     dataLoad = load(sprintf('%s/Spk_%03d_pitch.mat',commonPath,iSpeaker));
+     pitch = dataLoad.pitch;
      
-     dataLoad = load(sprintf('./data/Spk_%03d_energy.mat',iSpeaker));
-     energy = dataLoad.Energy;
+     dataLoad = load(sprintf('%s/Spk_%03d_energy.mat',commonPath,iSpeaker));
+     energy = dataLoad.energy;
      
-     dataLoad = load(sprintf('./data/Spk_%03d_gesture.mat',iSpeaker));
-     gesture = dataLoad.SkeletonFeatureSum;
+     dataLoad = load(sprintf('%s/Spk_%03d_gesture.mat',commonPath,iSpeaker));
+     gesture = dataLoad.gesture;
      
-     dataLoad = load(sprintf('./data/Spk_%03d_bodymovement.mat',iSpeaker));
-     bodymovement = dataLoad.SkeletonFeatureSumWholebody;
+     dataLoad = load(sprintf('%s/Spk_%03d_wholebodymovement.mat',commonPath,iSpeaker));
+     bodymovement = dataLoad.wholebodymovement;
      
-     dataLoad = load(sprintf('./data/Spk_%03d_GoogleFeatureSum.mat',iSpeaker));
-     GoogleFeatureSum = dataLoad.GoogleFeatureSum;
+     dataLoad = load(sprintf('%s/Spk_%03d_headmovement.mat',commonPath,iSpeaker));
+     GoogleFeatureSum = dataLoad.headmovement;
      
      
-     minLen = min(min(min(length(rate),length(pitch)),length(energy)),length(GoogleFeatureSum));
-    
+     minLen = min([length(rate),length(pitch),length(energy),...
+              length(gesture),length(bodymovement),length(GoogleFeatureSum)]);
+         
      if minLen<1 
          continue;
      end
-     rate = rate(1:minLen,:);
-     pitch = pitch(1:minLen,:);
-     energy = energy(1:minLen,:);
+     
+     bodymovement = bodymovement(1:minLen,:);
+     gesture = gesture(1:minLen,:);     
      GoogleFeatureSum = GoogleFeatureSum(1:minLen,:);
-%     if size(rate)>size(GoogleFeatureSum)
-%         GoogleFeatureSum=GoogleFeatureSum(1:size(rate),:);
-%     else
-%         rate=rate(1:size(GoogleFeatureSum),:);
-%     end  
-    
-    %[A,B,r,U,V] = canoncorr(rate,GoogleFeatureSum);
-    
-    [RHO,PVAL] = corr(pitch,GoogleFeatureSum); 
-    rSp(iSpeaker) = RHO;
-    %[A,B,RHO,U,V] = canoncorr(GoogleFeatureSum,pitch);
-%     RHO = abs(RHO);    
-    corr_head_pitch = corr_head_pitch + RHO;
-    
-    [RHO,PVAL] = corr(GoogleFeatureSum,rate);
-    rSp_2(iSpeaker) = RHO;
-%     [A,B,RHO,U,V] = canoncorr(GoogleFeatureSum,rate);
-%     RHO = abs(RHO);
-    corr_head_speakingrate = corr_head_speakingrate + RHO;
-    
-    [RHO,PVAL] = corr(GoogleFeatureSum,energy);
-%     [A,B,RHO,U,V] = canoncorr(GoogleFeatureSum,energy);
-%     RHO = abs(RHO);
-    corr_head_energy = corr_head_energy + RHO;
-    
-    
-    [RHO,PVAL] = corr(gesture,pitch);
-    corr_gesture_pitch = corr_gesture_pitch + RHO;
-    
-    rSp_gest_Pitch(iSpeaker) = RHO;
+                    
+     pitch = pitch(1:minLen,:);
+     rate = rate(1:minLen,:);
+     energy = energy(1:minLen,:);
+     
+     %%
+     [RHO,PVAL] = corr(bodymovement,pitch); 
+     corr_matrix(1,1) = corr_matrix(1,1)+RHO;
+     details(1,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(bodymovement,rate); 
+     corr_matrix(1,2) = corr_matrix(1,2)+RHO;
+     details(2,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(bodymovement,energy); 
+     corr_matrix(1,3) = corr_matrix(1,3)+RHO;
+     details(3,iSpeaker) = RHO;
+     
+     %%
+     [RHO,PVAL] = corr(gesture,pitch); 
+     corr_matrix(2,1) = corr_matrix(2,1)+RHO;
+     details(4,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(gesture,rate); 
+     corr_matrix(2,2) = corr_matrix(2,2)+RHO;
+     details(5,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(gesture,energy); 
+     corr_matrix(2,3) = corr_matrix(2,3)+RHO;
+     details(6,iSpeaker) = RHO;
+     
+     %%
+     [RHO,PVAL] = corr(GoogleFeatureSum,pitch); 
+     corr_matrix(3,1) = corr_matrix(3,1)+RHO;
+     details(7,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(GoogleFeatureSum,rate); 
+     corr_matrix(3,2) = corr_matrix(3,2)+RHO;
+     details(8,iSpeaker) = RHO;
+     
+     [RHO,PVAL] = corr(GoogleFeatureSum,energy); 
+     corr_matrix(3,3) = corr_matrix(3,3)+RHO;
+     details(9,iSpeaker) = RHO;
 
-    
-    [RHO,PVAL] = corr(bodymovement,pitch);
-    corr_bodymovement_pitch = corr_bodymovement_pitch + RHO;
-    rSp_bm_Pitch(iSpeaker) = RHO;
-    
-    
-    [RHO,PVAL] = corr(SkeletonFeatureSumWholebody,pitchnew);
-    [RHO_2,PVAL_2] = corr(SkeletonSum,pitch);
-    
-    [RHO_2,PVAL_2] = corr(SkeletonSum(1:175),pitch(1:175));
-    
-    
-    
-%     if A<0
-%         U=-U;
-%     end
-%     if B<0
-%         V=-V;
-%     end
-%     figure; hold all
-% 
-%     plot(0:5:size(U,1)*5-5,U(:,1), 'LineWidth',1.5);
-%     plot(0:5:size(U,1)*5-5,V(:,1), 'LineWidth',1.5);
-%     legend('Pitch','Body Movement');
-%     xlabel('Time (sec)');
-%     ax=gca;
-%     ax.YTickLabel='';
     nSpeaker = nSpeaker+1;
 end
 
-%nSpeaker = (eSpeaker - sSpeaker + 1);
 if nSpeaker<=0, return; end
-corr_head_pitch = corr_head_pitch/nSpeaker;
-corr_head_speakingrate = corr_head_speakingrate/nSpeaker;
-corr_head_energy = corr_head_energy/nSpeaker;
 
+corr_matrix = corr_matrix./nSpeaker;
+details = details';
 
-corr_bodymovement_pitch = corr_bodymovement_pitch/nSpeaker;
- corr_gesture_pitch = corr_gesture_pitch/nSpeaker;
-
+corr_matrix

@@ -8,7 +8,26 @@ currentPath = pwd;
 
 para.lenFeature = 5;
 
-for iSpeaker = 26:51
+% loaded = load('./skpTime');
+% spkTime = loaded.spkTime;
+% spkValidDuration = cell(51,1);
+% for iSpk = 1:51    
+%     spkValidSeg = spkTime.(['Spk' int2str(iSpk)]);
+%     lenSeg = size(spkValidSeg,2);
+%     
+%     maxLen = max(spkValidSeg(2,:));
+%     spkValidDuration{iSpk} = zeros(maxLen,1);
+%     
+%     for iLenSeg = 1:lenSeg
+%         timing=spkValidSeg(:,iLenSeg);
+%         spkValidDuration{iSpk}(max(timing(1),1):timing(2)) = 1;
+%     end
+% end
+% save('spkValidDuration','spkValidDuration');
+loaded = load('./spkValidDuration');
+spkValidDuration = loaded.spkValidDuration;
+
+for iSpeaker = 35:40
     disp(iSpeaker);
     
     %% load the original data
@@ -116,6 +135,10 @@ for iSpeaker = 26:51
     validFlagLen = min([length(rate), length(energy), length(pitch), ...
                     length(headmovement), length(wholebodymovement), length(gesture)]);
     
+    validFlagLen = min(validFlagLen,length(spkValidDuration{iSpeaker}));
+    validFlag(1:validFlagLen) = validFlag(1:validFlagLen).*spkValidDuration{iSpeaker}(1:validFlagLen);
+                
+                
     rate = rate(validFlag(1:validFlagLen)>0);
     energy = energy(validFlag(1:validFlagLen)>0);
     pitch = pitch(validFlag(1:validFlagLen)>0);
