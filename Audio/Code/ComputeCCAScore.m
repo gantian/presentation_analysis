@@ -11,17 +11,35 @@ clear;
 corr_matrix = zeros(3,3);
 details = zeros(9,100);
 
-sSpeaker = 1;
-eSpeaker = 51;
+sSpeaker = 36;
+eSpeaker = 36;
 
 nSpeaker = 0;
 
-commonPath = './data_withnoise';
+commonPath = './data';
 
 for iSpeaker = sSpeaker:eSpeaker
-    if (iSpeaker == 3 || iSpeaker==4)
+    if (iSpeaker == 3 || iSpeaker==4|| iSpeaker==47)
         continue;
     end
+%      dataLoad = load(sprintf('%s/Spk_%03d_rate.mat',commonPath,iSpeaker));
+%      rate = dataLoad.Rate;
+%      
+%      dataLoad = load(sprintf('%s/Spk_%03d_pitch.mat',commonPath,iSpeaker));
+%      pitch = dataLoad.pitchnew;
+%      
+%      dataLoad = load(sprintf('%s/Spk_%03d_energy.mat',commonPath,iSpeaker));
+%      energy = dataLoad.Energy;
+%      
+%      dataLoad = load(sprintf('%s/Spk_%03d_gesture.mat',commonPath,iSpeaker));
+%      gesture = dataLoad.SkeletonFeatureSum;
+%      
+%      dataLoad = load(sprintf('%s/Spk_%03d_bodymovement.mat',commonPath,iSpeaker));
+%      bodymovement = dataLoad.SkeletonFeatureSumWholebody;
+%      
+%      dataLoad = load(sprintf('%s/Spk_%03d_GoogleFeatureSum.mat',commonPath,iSpeaker));
+%      GoogleFeatureSum = dataLoad.GoogleFeatureSum;
+
      dataLoad = load(sprintf('%s/Spk_%03d_rate.mat',commonPath,iSpeaker));
      rate = dataLoad.rate;
      
@@ -39,6 +57,7 @@ for iSpeaker = sSpeaker:eSpeaker
      
      dataLoad = load(sprintf('%s/Spk_%03d_headmovement.mat',commonPath,iSpeaker));
      GoogleFeatureSum = dataLoad.headmovement;
+
      
      
      minLen = min([length(rate),length(pitch),length(energy),...
@@ -103,4 +122,3 @@ if nSpeaker<=0, return; end
 corr_matrix = corr_matrix./nSpeaker;
 details = details';
 
-corr_matrix

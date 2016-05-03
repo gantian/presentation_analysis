@@ -76,10 +76,10 @@ for iSpeaker = 35:40
     for iDuration = 1:duration
         selectedFrames = (iDuration-1)*25+1:iDuration*25;
         sensor_second_tmp = [sensorData(selectedFrames,9:11) sensorData(selectedFrames,13:15)];
-        sensor_second(iDuration) = sum(mean(abs(sensor_second_tmp)));      
+        sensor_second(iDuration) = sum(mean(abs(sensor_second_tmp)));     %%TODO 
         
         % missing data within this second
-        if (~all(any(sensor_second_tmp')))
+        if (~all(any(sensor_second_tmp')))%%TODO
             validFlag(iDuration:min(iDuration+para.lenFeature-1,duration)) = 0;
         end
     end
@@ -112,6 +112,7 @@ for iSpeaker = 35:40
         wholeBodyFeat_second_Y(emptySelection,:) = [];
         wholeBodyFeat_second_Z(emptySelection,:) = [];
         
+        %% TODO
         if isempty(wholeBodyFeat_second_X)
             validFlag(iDuration:min(iDuration+para.lenFeature-1,kinectLen)) = 0;
         else
