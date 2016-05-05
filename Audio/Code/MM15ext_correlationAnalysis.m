@@ -27,7 +27,7 @@ para.lenFeature = 5;
 loaded = load('./spkValidDuration');
 spkValidDuration = loaded.spkValidDuration;
 
-for iSpeaker = 35:40
+for iSpeaker = 1:1
     disp(iSpeaker);
     
     %% load the original data
@@ -50,6 +50,7 @@ for iSpeaker = 35:40
     syllables = textgrid2v(sprintf('%s/Audio/Spk_%03d_A_WSS.syllables.TextGrid',commonPath,iSpeaker));    
     lenValidAudio = floor(max(syllables));
     
+    %% wrong
     rate = zeros(lenValidAudio - para.lenFeature+1,1);
     for iLenValidAudio = 1:(lenValidAudio - para.lenFeature+1)
         rate(iLenValidAudio) = sum((syllables<=(syllables>(iLenValidAudio-1)).*(iLenValidAudio-1+para.lenFeature)));
