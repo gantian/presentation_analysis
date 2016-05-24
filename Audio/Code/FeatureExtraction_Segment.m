@@ -10,12 +10,14 @@ rCCA = cell(51,1);
 
 flag_diff = true;
 
+validLenArray = zeros(51,1);
+
 for iSpeaker = 1:51
     tic;
    % pause
-   if (iSpeaker~=27)
-       continue;
-   end
+%    if (iSpeaker~=27)
+%        continue;
+%    end
     
 %     if (iSpeaker ==3 || iSpeaker==4 || iSpeaker ==47)
 %         continue;
@@ -144,6 +146,9 @@ for iSpeaker = 1:51
     featureMatrix_Col(:,4)   = gesture_std_seg(validFlag_seg>0);
     %
     %
+    
+    validLenArray(iSpeaker) = size(featureMatrix_Col,1);
+    
     corrMat{iSpeaker} = zeros(8,4);
     for iRow = 1:8
         for iCol = 1:4
