@@ -1,4 +1,4 @@
-%clear;
+clear;
 
 para.segLen = 10;
 featCorrMat = zeros(51,32);
@@ -9,19 +9,28 @@ corrMat = cell(51,1);
 rCCA = cell(51,1);
 
 flag_diff = true;
+flag_obtain_proj_mat = false;
+flag_save_proj_feat = true;
 
 validLenArray = zeros(51,1);
+
+featureMatrix_Row_all = zeros(0,8);
+featureMatrix_Col_all = zeros(0,4);
+corrMat_proj = zeros(51,1);
+
+proj_mat = load('./projection_matrix.mat');
+
 
 for iSpeaker = 1:51
     tic;
    % pause
-%    if (iSpeaker~=27)
+%    if (iSpeaker~=23)
 %        continue;
 %    end
     
-%     if (iSpeaker ==3 || iSpeaker==4 || iSpeaker ==47)
-%         continue;
-%     end
+    if (iSpeaker ==3 || iSpeaker==4 || iSpeaker ==47)
+        continue;
+    end
     disp(iSpeaker);
     
     data = load(sprintf('./feature_second/Spk_%03d_feature_second',iSpeaker));
@@ -98,38 +107,10 @@ for iSpeaker = 1:51
     
     corrSeq{iSpeaker} = zeros(validFlagLen,1);
     %
-    
-%     featureMatrix_Row = zeros(validFlagLen,8);
-%     featureMatrix_Col = zeros(validFlagLen,4);
-    
-    
-%     featureMatrix_Row(:,1) = rate_ave_seg(1:validFlagLen);
-%     featureMatrix_Row(:,2) = rate_std_seg(1:validFlagLen);
-%     featureMatrix_Row(:,3)  = energy_ave_seg(1:validFlagLen);
-%     featureMatrix_Row(:,4)  = energy_std_seg(1:validFlagLen);
-%     featureMatrix_Row(:,5)  = pitch_a_ave_seg(1:validFlagLen);
-%     featureMatrix_Row(:,6)  = pitch_a_std_seg(1:validFlagLen);
-%     featureMatrix_Row(:,7)  = pitch_s_ave_seg(1:validFlagLen);
-%     featureMatrix_Row(:,8) =  pitch_s_std_seg(1:validFlagLen);
-%     
-%     featureMatrix_Col(:,1)  = sensor_ave_seg(1:validFlagLen);
-%     featureMatrix_Col(:,2)   = sensor_std_seg(1:validFlagLen);
-%     featureMatrix_Col(:,3)  =  wholebody_std_seg(1:validFlagLen);
-%     featureMatrix_Col(:,4)   = gesture_std_seg(1:validFlagLen);
-%     
-%     for iCorrS = para.corLen:validFlagLen
-%         selSeq = iCorrS-para.corLen+1:iCorrS;
-%         if all( validFlag_seg(selSeq))
-%             corrSeq{iSpeaker}(iCorrS) = corr(featureMatrix_Row(selSeq,1),featureMatrix_Col(selSeq,1) );
-%         else
-%             corrSeq{iSpeaker}(iCorrS) = inf;
-%         end
-%         %corrSeq{iSpeaker}(iCorrS
-%     end
+ 
     
     featureMatrix_Row = zeros(sum(validFlag_seg),8);
     featureMatrix_Col = zeros(sum(validFlag_seg),4);
-    %featureMatrix_Col = zeros(sum(validFlag_seg),2);
     
     featureMatrix_Row(:,1) = rate_ave_seg(validFlag_seg>0);
     featureMatrix_Row(:,2) = rate_std_seg(validFlag_seg>0);
@@ -147,7 +128,21 @@ for iSpeaker = 1:51
     %
     %
     
+    if flag_obtain_proj_mat
+        featureMatrix_Row_all = [featureMatrix_Row_all;featureMatrix_Row];
+        featureMatrix_Col_all = [featureMatrix_Col_all;featureMatrix_Col];
+    end
+    
     validLenArray(iSpeaker) = size(featureMatrix_Col,1);
+    
+    if flag_save_proj_feat
+        
+        featureMatrix_Row_proj = featureMatrix_Row*proj_mat.A(:,1);
+        featureMatrix_Col_proj = featureMatrix_Col*proj_mat.B(:,1);
+        corrMat_proj(iSpeaker) = corr(featureMatrix_Row_proj,featureMatrix_Col_proj);      
+        
+        save(sprintf('./feat_proj/spk_%02d_fea_proj.mat',iSpeaker),'featureMatrix_Row_proj','featureMatrix_Col_proj');
+    end
     
     corrMat{iSpeaker} = zeros(8,4);
     for iRow = 1:8
@@ -155,18 +150,19 @@ for iSpeaker = 1:51
             corrMat{iSpeaker}(iRow,iCol) = corr(featureMatrix_Row(:,iRow),featureMatrix_Col(:,iCol));
         end
     end
-    
-    [A,B,rCCA{iSpeaker},U,V] = canoncorr(featureMatrix_Row(:,1:8),featureMatrix_Col(:,1:4)) ;
-    
-    cla;plot(U(:,1)); hold on;plot(V(:,1),'r');
-    rCCA{iSpeaker}
-    pause(0.1);
-    
-%     a = 1; b = 1;
-%     signal_A = featureMatrix_Row(:,a)/norm(featureMatrix_Row(:,a));
-%     signal_B = featureMatrix_Col(:,b)/norm(featureMatrix_Col(:,b));
 %     
-%     corr(signal_A,signal_B)    
+%     [A,B,rCCA{iSpeaker},U,V] = canoncorr(featureMatrix_Row(:,1:8),featureMatrix_Col(:,1:4)) ;
+%     
+%     cla;plot(U(:,1)); hold on;plot(V(:,1),'r');
+%     rCCA{iSpeaker}
+%     pause(0.1);
+    
+% %% plot feature
+%     a = 1; b = 3;
+%     signal_A = featureMatrix_Row(:,a);%/norm(featureMatrix_Row(:,a));
+%     signal_B = featureMatrix_Col(:,b);%/norm(featureMatrix_Col(:,b));
+% %     
+% %     corr(signal_A,signal_B)    
 %     cla;plot(signal_A,'b'); hold on;plot(signal_B,'r');
     
     
@@ -257,3 +253,7 @@ for iSpeaker = 1:51
 %     
 end
 
+if flag_obtain_proj_mat
+    [A,B,rCCA,U,V] = canoncorr(featureMatrix_Row_all(:,1:8),featureMatrix_Col_all(:,1:4)) ;
+    save('projection_matrix','A','B','rCCA','U','V');
+end
