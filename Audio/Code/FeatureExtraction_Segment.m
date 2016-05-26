@@ -141,7 +141,8 @@ for iSpeaker = 1:51
         featureMatrix_Col_proj = featureMatrix_Col*proj_mat.B(:,1);
         corrMat_proj(iSpeaker) = corr(featureMatrix_Row_proj,featureMatrix_Col_proj);      
         
-        save(sprintf('./feat_proj/spk_%02d_fea_proj.mat',iSpeaker),'featureMatrix_Row_proj','featureMatrix_Col_proj');
+        save(sprintf('./feat_proj/spk_%02d_fea_proj.mat',iSpeaker),'featureMatrix_Row_proj','featureMatrix_Col_proj',...
+                                                                    'featureMatrix_Row','featureMatrix_Col');
     end
     
     corrMat{iSpeaker} = zeros(8,4);

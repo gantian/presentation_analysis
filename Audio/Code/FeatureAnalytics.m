@@ -40,18 +40,21 @@ for iSpk = 1:51
    dataLoad = load(sprintf('./feat_proj/spk_%02d_fea_proj.mat',iSpk));
    X = dataLoad.featureMatrix_Row_proj;
    Y = dataLoad.featureMatrix_Col_proj;
-   mX = mean(X);
-   vX = std(X);
-   mY = mean(Y);
-   vY = std(Y);
+%    mX = mean(X);
+%    vX = std(X);
+%    mY = mean(Y);
+%    vY = std(Y);
    
-   res{iSpk} = ((X - ones(length(X),1)*mX).*(Y - ones(length(Y),1)*mY))/(vX*vY);
+%   res{iSpk} = ((X - ones(length(X),1)*mX).*(Y - ones(length(Y),1)*mY))/(vX*vY);
+    res{iSpk} = 
 end
 
 
 
-iSpk = 23;
+iSpk = 43;
 dataLoad = load(sprintf('./feat_proj/spk_%02d_fea_proj.mat',iSpk));
+rawX = dataLoad.featureMatrix_Row;
+rawY = dataLoad.featureMatrix_Col;
 X = dataLoad.featureMatrix_Row_proj;
 Y = dataLoad.featureMatrix_Col_proj;
 
@@ -62,8 +65,43 @@ plot(Y,'b');
 hold on
 plot(res{iSpk},'g');
 
+mrawX = max(abs(rawX));
+mrawY = max(abs(rawY));
 
-figure;
-plot(res{iSpk},'g');
+
+rawX = rawX./repmat(mrawX,[size(rawX,1),1]);
+rawY = rawY./repmat(mrawY,[size(rawY,1),1]);
+
+for i=1:8
+    for j=1:4
+        
+        
+%         mX = mean(rawX(:,i));
+%         vX = std(rawX(:,i));
+%         mY = mean(rawY(:,j));
+%         vY = std(rawY(:,j));
+%         plotRes = ((rawX(:,i) - ones(length(rawX(:,i)),1)*mX).*(rawY(:,j) - ones(length(rawY(:,j)),1)*mY))/(vX*vY);
+        plotRes = CalculateCorrelation_Seg(rawX(:,i),rawY(:,j));
+        cla
+%         plot(rawX(:,i),'k');
+%         plot(rawY(:,j),'r');
+          plot(res{iSpk},'g');
+          plot(plotRes+5,'m');
+        corr_point = CalculateCorrelation(res{iSpk},plotRes);
+ %       corr_point(find(corr_point(:)<0))=0;
+        
+        corr_Seg = CalculateCorrelation_Seg(res{iSpk},plotRes);
+        %corr_Seg(find(corr_Seg(:)<0))=0;
+        plot(corr_Seg+15,'b');
+        plot(corr_point+20,'r');
+        fprintf('i=%d j=%d\n',i,j);
+        
+        
+        
+        
+        
+       pause;
+    end
+end
 
 
