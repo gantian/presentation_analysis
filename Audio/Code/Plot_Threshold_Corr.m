@@ -36,7 +36,7 @@ end
 
 corrDataAna_sum = sum(corrDataAna,1)';
 figure
-histogram(corrDataAna_sum);
+a = hist(corrDataAna_sum);
 
 
 % 
@@ -49,3 +49,14 @@ histogram(corrDataAna_sum);
 % featureMatrix_Col(:,1)  = sensor_second(validFlag_seg>0);
 % featureMatrix_Col(:,2)   = wholebody(validFlag_seg>0);
 % featureMatrix_Col(:,3)  =  gesture(validFlag_seg>0);
+
+cnt = 0;
+for iSpeaker = 1:51
+    individualData = corrMat{iSpeaker};
+    if isempty(individualData)
+        continue;
+    end
+    indMat = individualData{1};
+    len = size(indMat,1);
+    cnt = cnt+len;
+end
